@@ -2906,7 +2906,7 @@ uninstall() {
 # Sing-box 的最新版本
 version() {
   # FORCE_VERSION 用于在 sing-box 某个主程序出现 bug 时，强制为指定版本，以防止运行出错
-  local FORCE_VERSION=$(wget --no-check-certificate --tries=2 --timeout=3 -qO- ${GH_PROXY}https://raw.githubusercontent.com/fscarmen/sing-box/refs/heads/main/force_version | sed 's/^[vV]//g')
+  local FORCE_VERSION=$(wget --no-check-certificate --tries=2 --timeout=3 -qO- ${GH_PROXY}https://raw.githubusercontent.com/Maxrxf/sing-box/refs/heads/dev/force_version | sed 's/^[vV]//g')
   if grep -q '.' <<< "$FORCE_VERSION"; then
     local ONLINE="$FORCE_VERSION"
   else
