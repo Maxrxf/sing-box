@@ -17,7 +17,7 @@ PROTOCOL_LIST=("XTLS + reality" "hysteria2" "tuic" "ShadowTLS" "shadowsocks" "tr
 NODE_TAG=("xtls-reality" "hysteria2" "tuic" "ShadowTLS" "shadowsocks" "trojan" "vmess-ws" "vless-ws-tls" "h2-reality" "grpc-reality" "anytls")
 CONSECUTIVE_PORTS=${#PROTOCOL_LIST[@]}
 CDN_DOMAIN=("skk.moe" "ip.sb" "time.is" "cfip.xxxxxxxx.tk" "bestcf.top" "cdn.2020111.xyz" "xn--b6gac.eu.org")
-SUBSCRIBE_TEMPLATE="https://raw.githubusercontent.com/fscarmen/client_template/main"
+SUBSCRIBE_TEMPLATE="https://raw.githubusercontent.com/Maxrxf/client_template/dev"
 DEFAULT_NEWEST_VERSION='1.12.0-beta.11'
 
 export DEBIAN_FRONTEND=noninteractive
@@ -297,18 +297,6 @@ check_chatgpt() {
   fi
 }
 
-# 脚本当天及累计运行次数统计
-statistics_of_run-times() {
-  local UPDATE_OR_GET=$1
-  local SCRIPT=$2
-  if grep -q 'update' <<< "$UPDATE_OR_GET"; then
-    { wget -qO- --timeout=3 "https://stat-api.netlify.app/updateStats?script=${SCRIPT}" > $TEMP_DIR/statistics 2>/dev/null || true; }&
-  elif grep -q 'get' <<< "$UPDATE_OR_GET"; then
-    [ -s $TEMP_DIR/statistics ] && [[ $(cat $TEMP_DIR/statistics) =~ \"todayCount\":([0-9]+),\"totalCount\":([0-9]+) ]] && local TODAY="${BASH_REMATCH[1]}" && local TOTAL="${BASH_REMATCH[2]}" && rm -f $TEMP_DIR/statistics
-    hint "\n*******************************************\n\n $(text 55) \n"
-  fi
-}
-
 # 选择中英语言
 select_language() {
   if [ -z "$L" ]; then
@@ -353,7 +341,7 @@ input_cdn() {
 # 更换 cdn
 change_cdn() {
   [ ! -d "${WORK_DIR}" ] && error " $(text 107) "
-
+  
   # 检测是否有使用 CDN，方法是查找是否有 ${WORK_DIR}/conf/
   ! ls ${WORK_DIR}/conf/*-ws*inbounds.json >/dev/null 2>&1 && error " $(text 110) "
   local CDN_NOW=$(awk -F '"' '/"CDN"/{print $4; exit}' ${WORK_DIR}/conf/*-ws*inbounds.json)
@@ -364,16 +352,16 @@ change_cdn() {
     hint " $[c+1]. ${CDN_DOMAIN[c]} "
   done
   reading "\n $(text 111) " CDN_CHOOSE
-
+  
   # 如果用户直接回车，保持当前 CDN
   [ -z "$CDN_CHOOSE" ] && exit 0
-
+  
   # 如果用户输入数字，选择对应的 CDN
   [[ "$CDN_CHOOSE" =~ ^[1-9][0-9]*$ && "$CDN_CHOOSE" -le "${#CDN_DOMAIN[@]}" ]] && CDN_NEW=${CDN_DOMAIN[$((CDN_CHOOSE-1))]} || CDN_NEW=$CDN_CHOOSE
-
+  
   # 使用 sed 更新所有文件中的 CDN 值
   find ${WORK_DIR} -type f | xargs -P 50 sed -i "s/${CDN_NOW}/${CDN_NEW}/g"
-
+  
   # 更新完成后提示并导出订阅列表
   export_list; info "\n $(text 112) \n"
 }
@@ -2747,6 +2735,7 @@ anytls://${UUID[21]}@${SERVER_IP_1}:${PORT_ANYTLS}/?insecure=1#${NODE_NAME[21]}%
   # 模板2
   local SING_BOX_JSON2=$(wget --no-check-certificate -qO- --tries=3 --timeout=2 ${GH_PROXY}${SUBSCRIBE_TEMPLATE}/sing-box2)
   echo $SING_BOX_JSON2 | sed "s#\"<INBOUND_REPLACE>\",#$INBOUND_REPLACE#; s#\"<NODE_REPLACE>\"#${NODE_REPLACE%,}#g" | ${WORK_DIR}/jq > ${WORK_DIR}/subscribe/sing-box2
+  echo $SING_BOX_JSON2 | sed "s#\"local\"#\"dhcp\"#; s#\"<INBOUND_REPLACE>\",#$INBOUND_REPLACE#; s#\"<NODE_REPLACE>\"#${NODE_REPLACE%,}#g" | ${WORK_DIR}/jq > ${WORK_DIR}/subscribe/sing-box2-pc
 
   # 生成二维码 url 文件
   [ "$IS_SUB" = 'is_sub' ] && cat > ${WORK_DIR}/subscribe/qr << EOF
@@ -2843,7 +2832,7 @@ $SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/clash
 $SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/clash2
 
 sing-box for pc $(text 80):
-$SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/sing-box-pc
+$SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/sing-box2-pc
 
 sing-box for cellphone $(text 80):
 $SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/sing-box-phone
@@ -2880,9 +2869,6 @@ $(${WORK_DIR}/qrencode $SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/auto2)
   # 生成并显示节点信息
   echo "$EXPORT_LIST_FILE" > ${WORK_DIR}/list
   cat ${WORK_DIR}/list
-
-  # 显示脚本使用情况数据
-  statistics_of_run-times get
 }
 
 # 创建快捷方式
@@ -2890,7 +2876,7 @@ create_shortcut() {
   cat > ${WORK_DIR}/sb.sh << EOF
 #!/usr/bin/env bash
 
-bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/fscarmen/sing-box/main/sing-box.sh) \$1
+bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/Maxrxf/sing-box/dev/sing-box.sh) \$1
 EOF
   chmod +x ${WORK_DIR}/sb.sh
   ln -sf ${WORK_DIR}/sb.sh /usr/bin/sb
@@ -3261,7 +3247,6 @@ uninstall() {
   fi
 }
 
-
 # Sing-box 的最新版本
 version() {
   # 获取需要下载的 sing-box 版本
@@ -3431,7 +3416,6 @@ menu() {
 }
 
 check_cdn
-statistics_of_run-times update sing-box.sh
 
 # 传参
 [[ "${*^^}" =~ '-E' ]] && L=E
