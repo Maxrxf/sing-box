@@ -3,7 +3,7 @@
 # 脚本更新日期 2025.08.22
 WORK_DIR=/sing-box
 PORT=$START_PORT
-SUBSCRIBE_TEMPLATE="https://raw.githubusercontent.com/fscarmen/client_template/main"
+SUBSCRIBE_TEMPLATE="https://raw.githubusercontent.com/Maxrxf/client_template/main"
 
 # 自定义字体彩色，read 函数
 warning() { echo -e "\033[31m\033[01m$*\033[0m"; }  # 红色
@@ -741,7 +741,7 @@ stdout_logfile=/dev/null
       ~*clash                    /clash;           # 匹配 Clash 客户端
       ~*ShadowRocket             /shadowrocket;    # 匹配 ShadowRocket  客户端
       ~*SFM                      /sing-box-pc;     # 匹配 Sing-box pc 客户端
-      ~*SFI|SFA                  /sing-box-phone;  # 匹配 Sing-box phone 客户端
+      ~*SFI|SFA                  /sing-box2;  # 匹配 Sing-box phone 客户端
    #   ~*Chrome|Firefox|Mozilla  /;                # 添加更多的分流规则
     }
 
@@ -1154,12 +1154,16 @@ vless://${UUID}@${SERVER_IP_1}:${PORT_GRPC_REALITY}?security=reality&sni=addons.
   local INBOUND_REPLACE+=" { \"type\": \"anytls\", \"tag\": \"${NODE_NAME} anytls\", \"server\": \"${SERVER_IP}\", \"server_port\": ${PORT_ANYTLS}, \"password\": \"${UUID}\", \"idle_session_check_interval\": \"30s\", \"idle_session_timeout\": \"30s\", \"min_idle_session\": 5, \"tls\": { \"enabled\": true, \"insecure\": true, \"server_name\": \"\" } }," &&
   local NODE_REPLACE+="\"${NODE_NAME} anytls\","
 
-  # 模板
-  local SING_BOX_JSON1=$(wget -qO- --tries=3 --timeout=2 ${SUBSCRIBE_TEMPLATE}/sing-box1)
-
+  # 模板1
+  local SING_BOX_JSON1=$(wget --no-check-certificate -qO- --tries=3 --timeout=2 ${GH_PROXY}${SUBSCRIBE_TEMPLATE}/sing-box1)
   echo $SING_BOX_JSON1 | sed 's#, {[^}]\+"tun-in"[^}]\+}##' | sed "s#\"<INBOUND_REPLACE>\",#$INBOUND_REPLACE#; s#\"<NODE_REPLACE>\"#${NODE_REPLACE%,}#g" | ${WORK_DIR}/jq > ${WORK_DIR}/subscribe/sing-box-pc
-
   echo $SING_BOX_JSON1 | sed 's# {[^}]\+"mixed"[^}]\+},##; s#, "auto_detect_interface": true##' | sed "s#\"<INBOUND_REPLACE>\",#$INBOUND_REPLACE#; s#\"<NODE_REPLACE>\"#${NODE_REPLACE%,}#g" | ${WORK_DIR}/jq > ${WORK_DIR}/subscribe/sing-box-phone
+
+  # 模板2
+  local SING_BOX_JSON2=$(wget --no-check-certificate -qO- --tries=3 --timeout=2 ${GH_PROXY}${SUBSCRIBE_TEMPLATE}/sing-box2)
+  echo $SING_BOX_JSON2 | sed "s#\"<INBOUND_REPLACE>\",#$INBOUND_REPLACE#; s#\"<NODE_REPLACE>\"#${NODE_REPLACE%,}#g" | ${WORK_DIR}/jq > ${WORK_DIR}/subscribe/sing-box2
+  echo $SING_BOX_JSON2 | sed "s#\"local\"#\"dhcp\"#; s#, \"override_android_vpn\": true##; s#\"<INBOUND_REPLACE>\",#$INBOUND_REPLACE#; s#\"<NODE_REPLACE>\"#${NODE_REPLACE%,}#g" | ${WORK_DIR}/jq > ${WORK_DIR}/subscribe/sing-box2-pc
+
 
   # 生成二维码 url 文件
   cat > ${WORK_DIR}/subscribe/qr << EOF
@@ -1244,10 +1248,10 @@ $(hint "Clash 订阅:
 https://${ARGO_DOMAIN}/${UUID}/clash
 
 sing-box for pc 订阅:
-https://${ARGO_DOMAIN}/${UUID}/sing-box-pc
+https://${ARGO_DOMAIN}/${UUID}/sing-box2-pc
 
 sing-box for cellphone 订阅:
-https://${ARGO_DOMAIN}/${UUID}/sing-box-phone
+https://${ARGO_DOMAIN}/${UUID}/sing-box2
 
 ShadowRocket 订阅:
 https://${ARGO_DOMAIN}/${UUID}/shadowrocket")
@@ -1269,12 +1273,6 @@ $(${WORK_DIR}/qrencode https://${ARGO_DOMAIN}/${UUID}/auto)
   # 生成并显示节点信息
   echo "$EXPORT_LIST_FILE" > ${WORK_DIR}/list
   cat ${WORK_DIR}/list
-
-  # 显示脚本使用情况数据
-  hint "\n*******************************************\n"
-  local STAT=$(wget --no-check-certificate -qO- --timeout=3 "https://stat.cloudflare.now.cc/api/updateStats?script=sing-box-docker.sh")
-  [[ "$STAT" =~ \"todayCount\":([0-9]+),\"totalCount\":([0-9]+) ]] && local TODAY="${BASH_REMATCH[1]}" && local TOTAL="${BASH_REMATCH[2]}"
-  hint "\n 脚本当天运行次数: $TODAY，累计运行次数: $TOTAL \n"
 }
 
 # Sing-box 的最新版本
