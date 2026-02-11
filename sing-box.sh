@@ -3254,9 +3254,6 @@ $(${WORK_DIR}/qrencode $SUBSCRIBE_ADDRESS/${UUID_CONFIRM}/auto2)
   # 生成并显示节点信息
   echo "$EXPORT_LIST_FILE" > ${WORK_DIR}/list
   cat ${WORK_DIR}/list
-
-  # 显示脚本使用情况数据
-   get
 }
 
 # 创建快捷方式
