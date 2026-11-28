@@ -21,7 +21,7 @@ PROTOCOL_LIST=("XTLS + reality" "hysteria2" "tuic" "ShadowTLS" "shadowsocks" "tr
 NODE_TAG=("xtls-reality" "hysteria2" "tuic" "ShadowTLS" "shadowsocks" "trojan" "vmess-ws" "vless-ws-tls" "h2-reality" "grpc-reality" "anytls" "naive" "snell-v6")
 CONSECUTIVE_PORTS=${#PROTOCOL_LIST[@]}
 CDN_DOMAIN=("openai.com" "staticdelivery.nexusmods.com" "www.shopify.com" "cdn.204910.best" "xin.usfox.qzz.io" "saas.sin.fan" "nrt.xxxxxxxx.nyc.mn" "cf.877771.xyz" "nrtcfdns.zone.id" "cloudflare-ip.mofashi.ltd")
-SUBSCRIBE_TEMPLATE="https://raw.githubusercontent.com/fscarmen/client_template/main"
+SUBSCRIBE_TEMPLATE="https://raw.githubusercontent.com/Maxrxf/client_template/main"
 DEFAULT_NEWEST_VERSION='1.15.0-alpha.14'
 IP_API_NODES=('https://ip.cloudflare.now.cc' 'https://ip.cloudflare.nyc.mn')
 FINGER_PRINT='chrome'
@@ -636,18 +636,6 @@ check_chatgpt() {
     echo "ban"
   else
     echo "unlock"
-  fi
-}
-
-# 脚本当天及累计运行次数统计
-statistics_of_run_times() {
-  local UPDATE_OR_GET=$1
-  local SCRIPT=$2
-  if grep -q 'update' <<< "$UPDATE_OR_GET"; then
-    { wget --no-check-certificate -qO- --timeout=3 "https://stat.cloudflare.now.cc/updateStats?script=${SCRIPT}" > $TEMP_DIR/statistics 2>/dev/null || true; }&
-  elif grep -q 'get' <<< "$UPDATE_OR_GET"; then
-    [ -s $TEMP_DIR/statistics ] && [[ $(cat $TEMP_DIR/statistics) =~ \"todayCount\":([0-9]+),\"totalCount\":([0-9]+) ]] && local TODAY="${BASH_REMATCH[1]}" && local TOTAL="${BASH_REMATCH[2]}" && rm -f $TEMP_DIR/statistics
-    hint "\n *******************************************\n\n $(text 55) \n"
   fi
 }
 
@@ -7144,8 +7132,6 @@ $(hint "⬆ Outbound (total):  $(format_traffic $OUT_SUM)")
     echo "$EXPORT_LIST_FILE" > ${WORK_DIR}/list
     cat ${WORK_DIR}/list
 
-    # 显示脚本使用情况数据
-    statistics_of_run_times get
   else
     # clash / clash2 在后台生成，等待完成后再由 dynamic_templates_ready() 校验。
     wait 2>/dev/null
@@ -7165,7 +7151,7 @@ create_shortcut() {
   cat > ${WORK_DIR}/sb.sh << EOF
 #!/usr/bin/env bash
 
-bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/fscarmen/sing-box/main/sing-box.sh) \$@
+bash <(wget --no-check-certificate -qO- https://raw.githubusercontent.com/Maxrxf/sing-box/main/sing-box.sh) \$@
 EOF
   chmod +x ${WORK_DIR}/sb.sh
   ln -sf ${WORK_DIR}/sb.sh /usr/bin/sb
@@ -7881,9 +7867,7 @@ menu() {
 [[ " ${*^^} " =~ [[:space:]]-U([[:space:]]|$) ]] && IS_UNINSTALL='is_uninstall'
 
 # 卸载是纯本地操作：跳过 CDN 探测，保证离线 / 弱网下立即进入卸载流程
-# 注：statistics_of_run_times 为运行统计，后台执行不阻塞卸载，必须与守卫分开成行保留
 [ "$IS_UNINSTALL" != 'is_uninstall' ] && check_cdn
-statistics_of_run_times update sing-box.sh 2>/dev/null
 
 ###### 为了给旧版本 04_experimental.json 补全 clash_api 配置并剥离 v2ray_api，将于 2026年12月31日移除
 # 卸载模式跳过：块内含服务重载 / kill -HUP，对即将删除的服务做无意义操作
